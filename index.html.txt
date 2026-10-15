@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王浠的个人主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2b78e4;
+            margin-bottom: 10px;
+        }
+        .info {
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #444;
+            border-left: 5px solid #2b78e4;
+            padding-left: 10px;
+            margin: 25px 0 15px;
+        }
+        .hobby-list {
+            list-style: none;
+        }
+        .hobby-list li {
+            background: #e8f2ff;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 17px;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>你好，我是王浠 ✨</h1>
+        <div class="info">
+            六年级学生｜今年11岁
+        </div>
+
+        <h2>👋 关于我</h2>
+        <p>大家好！我叫王浠，现在读六年级，今年11岁。平时喜欢动手和运动，课余时间会做自己喜欢的事情，不断挑战自己！</p>
+
+        <h2>🎯 我的爱好</h2>
+        <ul class="hobby-list">
+            <li>🧩 魔方：喜欢研究魔方，练习快速还原，享受拼好那一刻的成就感！</li>
+            <li>🪀 跳绳：经常练习跳绳，锻炼身体，还会挑战更快的速度。</li>
+        </ul>
+
+        <h2>📖 我的小目标</h2>
+        <p>好好学习，继续练习魔方和跳绳，不断进步，成为更好的自己！</p>
+
+        <div class="footer">
+            王浠的个人主页
+        </div>
+    </div>
+</body>
+</html>
