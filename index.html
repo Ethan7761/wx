@@ -117,49 +117,35 @@ button:hover{
   color:white;
   cursor:default;
 }
-/* 英语消消乐 */
-#english-area{margin-top:16px;}
-.english-mode-btn{
-  display:flex;gap:10px;margin-bottom:14px;
-  flex-wrap:wrap;
-}
-.english-mode-btn button{
-  padding:12px 18px;font-size:16px;
-}
-.english-board{
-  display:grid;
-  gap:10px;
-  max-width:520px;
-  margin:14px 0;
-}
-/* 简单模式：两列竖排 中文｜英文 */
-.english-board.simple{
-  grid-template-columns: 1fr 1fr;
-}
-/* 困难模式：自动多列打乱 */
-.english-board.hard{
-  grid-template-columns: repeat(4,1fr);
-}
-.english-card{
-  padding:18px 8px;
-  background:linear-gradient(135deg,#5641d8,#826cf0);
+/* ===== F1反应力测试样式 ===== */
+#reaction-area{margin-top:16px;}
+.reaction-box{
+  width:100%;
+  max-width:420px;
+  height:220px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
   color:white;
-  text-align:center;
-  border-radius:10px;
-  font-size:17px;
+  font-weight:bold;
   cursor:pointer;
   user-select:none;
-  transition:0.25s;
+  margin:10px 0;
+  transition: background 0.15s;
 }
-.english-card.selected{
-  background:linear-gradient(135deg,#ff9800,#ffc107);
-  color:#222;
+.wait-red{
+  background-color:#dd2222;
 }
-.english-card.hide-card{
-  display:none;
+.go-green{
+  background-color:#22aa22;
 }
-.timer-text{
-  font-weight:bold;font-size:18px;color:#d92b2b;margin:8px 0;
+.tooearly{
+  background-color:#882288;
+}
+.result-gray{
+  background-color:#666666;
 }
 </style>
 </head>
@@ -177,7 +163,7 @@ button:hover{
         <button onclick="showGuessGame()">🎮 猜数字游戏</button>
         <button onclick="showMineGame()">💣 扫雷游戏</button>
         <button onclick="showMemoryGame()">🃏 记忆卡牌游戏</button>
-        <button onclick="showEnglishGame()">📖 英语消消乐</button>
+        <button onclick="showReactionGame()">🏎️ F1车手反应力测试</button>
     </div>
     <!-- 猜数字游戏 -->
     <div id="guess-area" class="hide">
@@ -204,16 +190,15 @@ button:hover{
         <div id="memoryBoard" class="memory-board"></div>
         <div class="msg" id="memoryMsg"></div>
     </div>
-    <!-- 英语消消乐 -->
-    <div id="english-area" class="hide">
-        <h3>📖英语消消乐</h3>
-        <div class="english-mode-btn">
-            <button onclick="initEnglish('simple')">😊简单模式（8组）</button>
-            <button onclick="initEnglish('hard')">🔥困难模式（15组，限时30秒）</button>
+    <!-- F1反应力测试 -->
+    <div id="reaction-area" class="hide">
+        <h3>🏎️ F1车手反应力测试</h3>
+        <p>等待方块变绿色再点击！提前点=抢跑无效</p>
+        <div id="reactionBox" class="reaction-box wait-red" onclick="clickReactionBox()">
+            等待变绿
         </div>
-        <div class="timer-text" id="englishTimer"></div>
-        <div id="englishBoard" class="english-board"></div>
-        <div class="msg" id="englishMsg"></div>
+        <button onclick="resetReaction()">🔄再来一次</button>
+        <div class="msg" id="reactionMsg"></div>
     </div>
 </div>
 </div>
@@ -258,28 +243,29 @@ function showGuessGame(){
     document.getElementById("guess-area").classList.remove("hide");
     document.getElementById("mine-area").classList.add("hide");
     document.getElementById("memory-area").classList.add("hide");
-    document.getElementById("english-area").classList.add("hide");
+    document.getElementById("reaction-area").classList.add("hide");
     resetGuess();
 }
 function showMineGame(){
     document.getElementById("guess-area").classList.add("hide");
     document.getElementById("mine-area").classList.remove("hide");
     document.getElementById("memory-area").classList.add("hide");
-    document.getElementById("english-area").classList.add("hide");
+    document.getElementById("reaction-area").classList.add("hide");
     initMine();
 }
 function showMemoryGame(){
     document.getElementById("guess-area").classList.add("hide");
     document.getElementById("mine-area").classList.add("hide");
     document.getElementById("memory-area").classList.remove("hide");
-    document.getElementById("english-area").classList.add("hide");
+    document.getElementById("reaction-area").classList.add("hide");
     initMemory();
 }
-function showEnglishGame(){
+function showReactionGame(){
     document.getElementById("guess-area").classList.add("hide");
     document.getElementById("mine-area").classList.add("hide");
     document.getElementById("memory-area").classList.add("hide");
-    document.getElementById("english-area").classList.remove("hide");
+    document.getElementById("reaction-area").classList.remove("hide");
+    resetReaction();
 }
 // ============猜数字============
 let answer = 0;
@@ -489,145 +475,53 @@ function checkMemoryWin(){
         document.getElementById("memoryMsg").innerText="🎉恭喜，全部卡牌配对完成，游戏胜利！";
     }
 }
-// ============英语消消乐============
-//单词库
-const simpleWordList = [
-  {en:"apple",cn:"苹果"},
-  {en:"banana",cn:"香蕉"},
-  {en:"cat",cn:"猫"},
-  {en:"dog",cn:"狗"},
-  {en:"book",cn:"书"},
-  {en:"pen",cn:"钢笔"},
-  {en:"sun",cn:"太阳"},
-  {en:"moon",cn:"月亮"},
-];
-const hardWordList = [
-  {en:"apple",cn:"苹果"},
-  {en:"banana",cn:"香蕉"},
-  {en:"cat",cn:"猫"},
-  {en:"dog",cn:"狗"},
-  {en:"book",cn:"书"},
-  {en:"pen",cn:"钢笔"},
-  {en:"sun",cn:"太阳"},
-  {en:"moon",cn:"月亮"},
-  {en:"bird",cn:"小鸟"},
-  {en:"fish",cn:"鱼"},
-  {en:"milk",cn:"牛奶"},
-  {en:"water",cn:"水"},
-  {en:"tree",cn:"树"},
-  {en:"flower",cn:"花"},
-  {en:"school",cn:"学校"},
-];
+// ============F1反应力测试代码============
+let reactionState = "idle"; // idle wait green result
+let timerId = null;
+let startTime = 0;
+const boxDom = document.getElementById("reactionBox");
+const msgDom = document.getElementById("reactionMsg");
 
-let englishItems = [];
-let selectedItem = null;
-let englishMode = "simple";
-let timer = null;
-let remainTime = 30;
-function initEnglish(mode){
-    englishMode = mode;
-    selectedItem = null;
-    document.getElementById("englishMsg").innerText="";
-    document.getElementById("englishTimer").innerText="";
-    if(timer) clearInterval(timer);
-
-    let wordList;
-    if(mode === "simple"){
-        wordList = simpleWordList;
-    }else{
-        wordList = hardWordList;
-        remainTime = 30;
-    }
-
-    let temp = [];
-    if(mode === "simple"){
-        //简单模式：左边全部中文竖排，右边全部英文竖排，不打乱分组
-        wordList.forEach(w=>{
-            temp.push({text:w.cn,matchId:w.en,hide:false});
-        });
-        wordList.forEach(w=>{
-            temp.push({text:w.en,matchId:w.en,hide:false});
-        });
-    }else{
-        //困难模式：中英文全部打乱
-        wordList.forEach(w=>{
-            temp.push({text:w.cn,matchId:w.en,hide:false});
-            temp.push({text:w.en,matchId:w.en,hide:false});
-        });
-        //洗牌
-        for(let i=temp.length-1;i>0;i--){
-            let j = Math.floor(Math.random()*(i+1));
-            [temp[i],temp[j]] = [temp[j],temp[i]];
-        }
-    }
-    englishItems = temp;
-    renderEnglish();
-
-    //困难模式开启倒计时
-    if(mode === "hard"){
-        document.getElementById("englishTimer").innerText="⏱剩余时间："+remainTime+"秒";
-        timer = setInterval(()=>{
-            remainTime--;
-            document.getElementById("englishTimer").innerText="⏱剩余时间："+remainTime+"秒";
-            if(remainTime <=0){
-                clearInterval(timer);
-                document.getElementById("englishMsg").innerText="⏰时间到！游戏失败！";
-            }
-        },1000);
-    }
+function resetReaction(){
+    if(timerId) clearTimeout(timerId);
+    reactionState = "wait";
+    boxDom.className = "reaction-box wait-red";
+    boxDom.innerText = "等待变绿";
+    msgDom.innerText = "";
+    //随机延迟 1.5~4秒后变绿
+    const delay = 1500 + Math.random()*2500;
+    timerId = setTimeout(()=>{
+        reactionState = "green";
+        boxDom.className = "reaction-box go-green";
+        boxDom.innerText = "🟢快点击！";
+        startTime = performance.now();
+    },delay);
 }
-function renderEnglish(){
-    const wrap = document.getElementById("englishBoard");
-    wrap.innerHTML="";
-    wrap.className="english-board";
-    wrap.classList.add(englishMode);
 
-    englishItems.forEach((item,idx)=>{
-        const div = document.createElement("div");
-        div.className="english-card";
-        if(item.hide){
-            div.classList.add("hide-card");
-        }
-        div.innerText = item.text;
-        div.dataset.index = idx;
-        if(selectedItem && selectedItem.idx === idx){
-            div.classList.add("selected");
-        }
-        div.onclick = ()=>clickEnglishCard(idx);
-        wrap.appendChild(div);
-    })
-}
-function clickEnglishCard(idx){
-    if(remainTime<=0 && englishMode==="hard") return;
-    const item = englishItems[idx];
-    if(item.hide) return;
-
-    if(selectedItem === null){
-        selectedItem = {idx, data:item};
-        renderEnglish();
-    }else{
-        if(selectedItem.idx === idx) return;
-        //配对成功：两个卡片隐藏（消失）
-        if(selectedItem.data.matchId === item.matchId){
-            englishItems[selectedItem.idx].hide = true;
-            englishItems[idx].hide = true;
-            selectedItem = null;
-            document.getElementById("englishMsg").innerText("✅配对成功！");
-            renderEnglish();
-            checkEnglishWin();
-        }else{
-            //配对错误，直接清空选中状态
-            selectedItem = null;
-            document.getElementById("englishMsg").innerText("❌不匹配，请重新选择！");
-            renderEnglish();
-        }
+function clickReactionBox(){
+    if(reactionState === "wait"){
+        //抢跑！还没绿就点
+        if(timerId) clearTimeout(timerId);
+        reactionState = "result";
+        boxDom.className = "reaction-box tooearly";
+        boxDom.innerText = "❌抢跑！";
+        msgDom.innerText = "太早点击，本轮无效，点再来一次";
+        return;
     }
-}
-function checkEnglishWin(){
-    let allHide = englishItems.every(i=>i.hide === true);
-    if(allHide){
-        if(timer) clearInterval(timer);
-        document.getElementById("englishMsg").innerText="🎉太棒啦！所有单词配对完成！";
+    if(reactionState === "green"){
+        //计算反应时间
+        const endTime = performance.now();
+        const ms = Math.round(endTime - startTime);
+        reactionState = "result";
+        boxDom.className = "reaction-box result-gray";
+        boxDom.innerText = `${ms} ms`;
+        let rank;
+        if(ms >=120 && ms <=145) rank = "夯";
+        else if(ms >=146 && ms <=180) rank = "顶级";
+        else if(ms >=180 && ms <=220) rank = "人上人";
+        else if(ms >=220 && ms <=250) rank = "npc";
+        else rank = "拉完了";
+        msgDom.innerText = `反应：${ms}ms，评价：${rank}`;
     }
 }
 
@@ -637,7 +531,6 @@ window.onload=()=>{
 </script>
 </body>
 </html>
-
 
 </script>
 </body>
