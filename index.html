@@ -6,23 +6,73 @@
 <title>Wx的小游戏中心</title>
 <style>
 *{box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;margin:0;padding:0;}
-body{background:#f0f7ff;padding:20px;max-width:800px;margin:0 auto;}
-.box{background:#fff;padding:24px;border-radius:12px;box-shadow:0 2px 12px #00000015;margin-bottom:20px;}
-h1{color:#224488;margin-bottom:8px;font-size:26px;}
-.info{font-size:17px;color:#444;margin-bottom:24px;line-height:1.6;}
-.btn-group{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
-button{padding:12px 22px;font-size:16px;border:none;border-radius:8px;background:#2b60de;color:white;cursor:pointer;transition:0.2s;}
-button:hover{background:#1f48b3;}
+
+/* 星空背景 */
+body{
+  margin:0;
+  min-height:100vh;
+  overflow-x:hidden;
+  background:#050520;
+}
+#starBg{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  z-index:-1;
+}
+
+.container{
+  padding:24px;
+  max-width:850px;
+  margin:0 auto;
+}
+.box{
+  background:rgba(255,255,255,0.92);
+  padding:28px;
+  border-radius:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  margin-bottom:22px;
+}
+h1{color:#1a2b60;margin-bottom:10px;font-size:28px;}
+.info{
+  font-size:17px;
+  color:#222;
+  line-height:1.8;
+  margin-bottom:26px;
+}
+.btn-group{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+button{
+  padding:12px 20px;
+  font-size:16px;
+  border:none;
+  border-radius:9px;
+  background:#2b4cad;
+  color:white;
+  cursor:pointer;
+  transition:0.2s;
+}
+button:hover{background:#1c337a;}
 .hide{display:none;}
 
 /* 猜数字 */
 #guess-area{margin-top:16px;}
-#guess-area input{padding:10px;width:220px;font-size:16px;border:1px solid #ccc;border-radius:6px;margin-right:8px;}
-.msg{margin:12px 0;font-size:16px;min-height:24px;}
+#guess-area input{
+  padding:10px;width:220px;font-size:16px;
+  border:1px solid #aaa;border-radius:6px;margin-right:8px;
+}
+.msg{margin:12px 0;font-size:16px;min-height:26px;}
 
 /* 扫雷 */
 #mine-area{margin-top:16px;}
-.mine-board{display:grid;gap:2px;background:#aaa;padding:2px;border-radius:4px;width:fit-content;margin:10px 0;}
+.mine-board{
+  display:grid;gap:2px;background:#777;padding:3px;border-radius:6px;
+  width:fit-content;margin:12px 0;
+}
 .mine-cell{
   width:32px;height:32px;background:#cccccc;
   display:flex;align-items:center;justify-content:center;
@@ -30,7 +80,7 @@ button:hover{background:#1f48b3;}
   border:2px outset #eee;user-select:none;
 }
 .mine-cell.opened{background:#e8e8e8;border:1px solid #bbb;}
-.mine-cell.flag{background:#ffdd99;content:"🚩";}
+.mine-cell.flag{background:#ffdd99;}
 .color1{color:blue;}
 .color2{color:green;}
 .color3{color:red;}
@@ -38,19 +88,53 @@ button:hover{background:#1f48b3;}
 .color5{color:brown;}
 .color6{color:teal;}
 .color7{color:black;}
-.color8{color:#666;}
+.color8{color:#555;}
+
+/* 记忆卡牌 */
+#memory-area{margin-top:16px;}
+.memory-board{
+  display:grid;
+  grid-template-columns:repeat(4,70px);
+  gap:8px;
+  margin:14px 0;
+}
+.memory-card{
+  width:70px;height:70px;
+  background:#2b4cad;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:white;font-size:28px;
+  cursor:pointer;
+  user-select:none;
+  transition:0.3s;
+}
+.memory-card.open{
+  background:#fff;
+  color:#222;
+  border:2px solid #2b4cad;
+}
+.memory-card.done{
+  background:#72c072;
+  color:white;
+  cursor:default;
+}
 </style>
 </head>
 <body>
+<canvas id="starBg"></canvas>
+<div class="container">
 <div class="box">
-    <h1>你好，我是 Wx</h1>
+    <h1>👋 你好，我是 Wx</h1>
     <div class="info">
-        我就读于深圳市凤光小学 六年级二班。<br>
-        欢迎来到我的小游戏中心，请选择下面游戏开始游玩。
+        我现在就读于<strong>深圳市凤光小学 六年级二班</strong>。<br>
+        我的爱好有：<strong>跳绳、编程、魔方</strong>。<br>
+        在跳绳项目中，我曾经获得过全国冠军、亚军、季军的好成绩。<br>
+        欢迎来到我的小游戏中心，选择下面游戏开始游玩！
     </div>
     <div class="btn-group">
         <button onclick="showGuessGame()">🎮 猜数字游戏</button>
         <button onclick="showMineGame()">💣 扫雷游戏</button>
+        <button onclick="showMemoryGame()">🃏 记忆卡牌游戏</button>
     </div>
 
     <!-- 猜数字游戏 -->
@@ -71,32 +155,84 @@ button:hover{background:#1f48b3;}
         <div id="mineBoard" class="mine-board"></div>
         <div class="msg" id="mineMsg"></div>
     </div>
+
+    <!-- 记忆卡牌游戏 -->
+    <div id="memory-area" class="hide">
+        <h3>🃏记忆卡牌配对</h3>
+        <p>翻开两张卡牌，找到相同图案进行配对，全部配对成功即获胜</p>
+        <button onclick="initMemory()">重新开始</button>
+        <div id="memoryBoard" class="memory-board"></div>
+        <div class="msg" id="memoryMsg"></div>
+    </div>
+</div>
 </div>
 
 <script>
-// ============ 切换游戏显示 ============
+// ======================星空背景canvas======================
+const canvas = document.getElementById('starBg');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resizeStar(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars=[];
+  for(let i=0;i<450;i++){
+    stars.push({
+      x:Math.random()*canvas.width,
+      y:Math.random()*canvas.height,
+      r:Math.random()*1.3,
+      speed:Math.random()*0.4
+    })
+  }
+}
+function drawStar(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#ffffff";
+  for(let s of stars){
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fill();
+    s.y += s.speed;
+    if(s.y>canvas.height){
+      s.y=0;
+      s.x=Math.random()*canvas.width;
+    }
+  }
+  requestAnimationFrame(drawStar);
+}
+resizeStar();
+drawStar();
+window.addEventListener("resize",resizeStar);
+
+// ============切换游戏============
 function showGuessGame(){
     document.getElementById("guess-area").classList.remove("hide");
     document.getElementById("mine-area").classList.add("hide");
+    document.getElementById("memory-area").classList.add("hide");
     resetGuess();
 }
 function showMineGame(){
     document.getElementById("guess-area").classList.add("hide");
     document.getElementById("mine-area").classList.remove("hide");
+    document.getElementById("memory-area").classList.add("hide");
     initMine();
 }
+function showMemoryGame(){
+    document.getElementById("guess-area").classList.add("hide");
+    document.getElementById("mine-area").classList.add("hide");
+    document.getElementById("memory-area").classList.remove("hide");
+    initMemory();
+}
 
-// ============ 猜数字游戏 ============
+// ============猜数字============
 let answer = 0;
 let guessCount = 0;
-
 function resetGuess(){
     answer = Math.floor(Math.random()*100)+1;
     guessCount = 0;
     document.getElementById("guessInput").value="";
     document.getElementById("guessMsg").innerText="游戏已重置，请输入数字开始猜！";
 }
-
 function doGuess(){
     const inputDom = document.getElementById("guessInput");
     const msgDom = document.getElementById("guessMsg");
@@ -115,23 +251,21 @@ function doGuess(){
     }
 }
 
-// ============ 扫雷游戏 9*9 10雷【已修复旗子bug】 ============
+// ============扫雷（修复旗子bug版本）============
 const ROW=9, COL=9, MINE_COUNT=10;
 let board=[];
 let mineMap=[];
 let opened=[];
-let flagged=[]; // 保存旗子状态！修复关键
+let flagged=[];
 let gameOver=false;
-
 function initMine(){
     gameOver=false;
     document.getElementById("mineMsg").innerText="";
     board = Array(ROW).fill(0).map(()=>Array(COL).fill(0));
     mineMap = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
     opened = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
-    flagged = Array(ROW).fill(false).map(()=>Array(COL).fill(false)); //初始化旗子数组
+    flagged = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
 
-    //随机放地雷
     let placed=0;
     while(placed<MINE_COUNT){
         let r = Math.floor(Math.random()*ROW);
@@ -141,7 +275,6 @@ function initMine(){
             placed++;
         }
     }
-    //计算周围雷数
     for(let r=0;r<ROW;r++){
         for(let c=0;c<COL;c++){
             if(mineMap[r][c]) continue;
@@ -157,7 +290,6 @@ function initMine(){
     }
     renderMineBoard();
 }
-
 function renderMineBoard(){
     const wrap = document.getElementById("mineBoard");
     wrap.innerHTML="";
@@ -166,14 +298,11 @@ function renderMineBoard(){
         for(let c=0;c<COL;c++){
             const div = document.createElement("div");
             div.className="mine-cell";
-            div.dataset.r=r;
-            div.dataset.c=c;
             div.onclick=()=>cellClick(r,c);
             div.oncontextmenu=(e)=>{
                 e.preventDefault();
                 cellRightClick(r,c);
             };
-
             if(opened[r][c]){
                 div.classList.add("opened");
                 if(mineMap[r][c]){
@@ -190,13 +319,10 @@ function renderMineBoard(){
         }
     }
 }
-
-//左键点开格子
 function cellClick(r,c){
     if(gameOver) return;
     if(opened[r][c]) return;
-    if(flagged[r][c]) return; //插旗子的格子左键不能点开
-
+    if(flagged[r][c]) return;
     if(mineMap[r][c]){
         gameOver=true;
         opened = Array(ROW).fill(false).map((_,ri)=>mineMap[ri].map(x=>x));
@@ -208,8 +334,6 @@ function cellClick(r,c){
     checkWin();
     renderMineBoard();
 }
-
-//递归翻开空白格子
 function openCell(r,c){
     if(r<0||r>=ROW||c<0||c>=COL) return;
     if(opened[r][c]) return;
@@ -222,16 +346,12 @@ function openCell(r,c){
         }
     }
 }
-
-//右键插旗/取消旗子，修改数组flagged
 function cellRightClick(r,c){
     if(gameOver) return;
     if(opened[r][c]) return;
-    flagged[r][c] = !flagged[r][c]; //切换旗子状态
+    flagged[r][c] = !flagged[r][c];
     renderMineBoard();
 }
-
-//判断胜利
 function checkWin(){
     let unopenedSafe=0;
     for(let r=0;r<ROW;r++){
@@ -242,6 +362,80 @@ function checkWin(){
     if(unopenedSafe===0){
         gameOver=true;
         document.getElementById("mineMsg").innerText="🎉恭喜，扫雷全部完成，游戏胜利！";
+    }
+}
+
+// ============记忆卡牌游戏============
+let memoryCards = [];
+let openList = [];
+let memoryLock = false;
+const symbols = ["🍎","🍐","🍊","🍋","🍇","🍓","🥝","🍒"];
+
+function initMemory(){
+    openList = [];
+    memoryLock = false;
+    document.getElementById("memoryMsg").innerText="";
+    //生成成对卡牌
+    let arr = [...symbols,...symbols];
+    //洗牌
+    for(let i=arr.length-1;i>0;i--){
+        let j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    memoryCards = arr;
+    renderMemory();
+}
+function renderMemory(){
+    const boardDom = document.getElementById("memoryBoard");
+    boardDom.innerHTML = "";
+    memoryCards.forEach((sym,idx)=>{
+        const div = document.createElement("div");
+        div.className="memory-card";
+        div.dataset.index = idx;
+        div.dataset.symbol = sym;
+        div.onclick = ()=>clickCard(idx);
+        if(openList.find(x=>x.idx===idx)){
+            div.classList.add("open");
+            div.innerText = sym;
+            if(openList.find(x=>x.idx===idx && x.done)){
+                div.classList.add("done");
+            }
+        }
+        boardDom.appendChild(div);
+    })
+}
+function clickCard(index){
+    if(memoryLock) return;
+    let exist = openList.find(i=>i.idx===index);
+    if(exist) return;
+
+    openList.push({idx:index,symbol:memoryCards[index],done:false});
+    renderMemory();
+
+    if(openList.length %2 ===0){
+        memoryLock = true;
+        let last1 = openList[openList.length-2];
+        let last2 = openList[openList.length-1];
+        if(last1.symbol === last2.symbol){
+            last1.done = true;
+            last2.done = true;
+            memoryLock = false;
+            renderMemory();
+            checkMemoryWin();
+        }else{
+            setTimeout(()=>{
+                openList.pop();
+                openList.pop();
+                memoryLock = false;
+                renderMemory();
+            },800)
+        }
+    }
+}
+function checkMemoryWin(){
+    let allDone = openList.every(item=>item.done===true);
+    if(allDone && openList.length === memoryCards.length){
+        document.getElementById("memoryMsg").innerText="🎉恭喜，全部卡牌配对完成，游戏胜利！";
     }
 }
 
