@@ -3,84 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>王浠的个人主页</title>
+    <title>井字棋 人机对弈</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft Yahei", sans-serif;
+            font-family: system-ui, sans-serif;
         }
         body {
-            background-color: #f0f8ff;
-            color: #333;
-        }
-        .container {
-            width: 90%;
-            max-width: 700px;
-            margin: 40px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: #222;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 40px;
         }
         h1 {
-            text-align: center;
-            color: #2b78e4;
-            margin-bottom: 10px;
+            margin-bottom:20px;
         }
-        .info {
-            text-align: center;
-            font-size: 18px;
-            color: #555;
-            margin-bottom: 30px;
+        .status {
+            font-size:20px;
+            margin-bottom:20px;
+            height:28px;
         }
-        h2 {
-            color: #444;
-            border-left: 5px solid #2b78e4;
-            padding-left: 10px;
-            margin: 25px 0 15px;
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 6px;
+            background:#444;
+            padding:6px;
+            border-radius:8px;
         }
-        .hobby-list {
-            list-style: none;
+        .cell {
+            width:100px;
+            height:100px;
+            background:#333;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:48px;
+            cursor:pointer;
+            border-radius:4px;
+            user-select:none;
         }
-        .hobby-list li {
-            background: #e8f2ff;
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 17px;
+        .cell:hover:not(.taken) {
+            background:#3a3a3a;
         }
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #888;
-            font-size: 14px;
+        .cell.taken {
+            cursor:default;
+        }
+        .btn-group {
+            margin-top:24px;
+        }
+        button {
+            padding:10px 20px;
+            font-size:16px;
+            border:none;
+            border-radius:6px;
+            margin:0 6px;
+            cursor:pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>你好，我是王浠 ✨</h1>
-        <div class="info">
-            六年级学生｜今年11岁
-        </div>
-
-        <h2>👋 关于我</h2>
-        <p>大家好！我叫王浠，现在读六年级，今年11岁。平时喜欢动手和运动，课余时间会做自己喜欢的事情，不断挑战自己！</p>
-
-        <h2>🎯 我的爱好</h2>
-        <ul class="hobby-list">
-            <li>🧩 魔方：喜欢研究魔方，练习快速还原，享受拼好那一刻的成就感！</li>
-            <li>🪀 跳绳：经常练习跳绳，锻炼身体，还会挑战更快的速度。</li>
-        </ul>
-
-        <h2>📖 我的小目标</h2>
-        <p>好好学习，继续练习魔方和跳绳，不断进步，成为更好的自己！</p>
-
-        <div class="footer">
-            王浠的个人主页
-        </div>
+    <h1>井字棋 人机对战</h1>
+    <div class="status" id="status">你的回合 (X)</div>
+    <div class="board" id="board"></div>
+    <div class="btn-group">
+        <button id="resetBtn">重新开始</button>
     </div>
+
+<script>
+const boardEl = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const resetBtn = document.getElementById('resetBtn');
+
+let board = [0,0,0,0,0,0,0,0,0]; // 0空 1玩家X 2电脑O
+let gameOver = false;
+
+// 渲染棋盘
+function render(){
+    boardEl.innerHTML = '';
+    for(let i=0;i<9;i++){
+        const div = document.createElement('div');
+        div.className = 'cell';
+        if(board[i]===1){
+            div.textContent = 'X';
+            div.classList.add('taken');
+        }else if(board[i]===2){
+            div.textContent = 'O';
+            div.classList.add('taken');
+        }
+        div.dataset.idx = i;
+        div.addEventListener('click',()=>clickCell(i));
+        boardEl.appendChild(div);
+    }
+}
+
+// 获胜判断
+function checkWin(b){
+    const wins = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+    for(let w of wins){
+        const [a,b1,c] = w;
+        if(b[a]!==0 && b[a]===b[b1] && b[b1]===b[c]){
+            return b[a];
+        }
+    }
+    if(b.every(x=>x!==0)) return -1; //平局
+    return 0;
+}
+
+// 极小极大 AI
+function minimax(b, isMax){
+    const res = checkWin(b);
+    if(res===2) return 10;
+    if(res===1) return -10;
+    if(res===-1) return 0;
+
+    if(isMax){
+        let best = -Infinity;
+        for(let i=0;i<9;i++){
+            if(b[i]===0){
+                b[i]=2;
+                best = Math.max(best, minimax(b,false));
+                b[i]=0;
+            }
+        }
+        return best;
+    }else{
+        let best = Infinity;
+        for(let i=0;i<9;i++){
+            if(b[i]===0){
+                b[i]=1;
+                best = Math.min(best, minimax(b,true));
+                b[i]=0;
+            }
+        }
+        return best;
+    }
+}
+
+// AI落子
+function aiMove(){
+    if(gameOver) return;
+    let bestScore = -Infinity;
+    let move = -1;
+    for(let i=0;i<9;i++){
+        if(board[i]===0){
+            board[i]=2;
+            const s = minimax(board,false);
+            board[i]=0;
+            if(s>bestScore){
+                bestScore = s;
+                move = i;
+            }
+        }
+    }
+    if(move!==-1){
+        board[move]=2;
+        render();
+        judgeGame();
+    }
+}
+
+// 玩家点击
+function clickCell(idx){
+    if(gameOver || board[idx]!==0) return;
+    board[idx]=1;
+    render();
+    judgeGame();
+    if(!gameOver){
+        statusEl.innerText = "电脑思考中...";
+        setTimeout(()=>{
+            aiMove();
+            if(!gameOver) statusEl.innerText = "你的回合 (X)";
+        },400);
+    }
+}
+
+// 判断游戏结果
+function judgeGame(){
+    const r = checkWin(board);
+    if(r===1){
+        statusEl.innerText = "🎉 你赢了！";
+        gameOver=true;
+    }else if(r===2){
+        statusEl.innerText = "😞 电脑获胜";
+        gameOver=true;
+    }else if(r===-1){
+        statusEl.innerText = "🤝 平局";
+        gameOver=true;
+    }
+}
+
+// 重置
+resetBtn.addEventListener('click',()=>{
+    board = [0,0,0,0,0,0,0,0,0];
+    gameOver = false;
+    statusEl.innerText = "你的回合 (X)";
+    render();
+});
+
+render();
+</script>
 </body>
 </html>
+
