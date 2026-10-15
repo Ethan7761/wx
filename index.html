@@ -1,216 +1,247 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>井字棋 人机对弈</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, sans-serif;
-        }
-        body {
-            background-color: #222;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 40px;
-        }
-        h1 {
-            margin-bottom:20px;
-        }
-        .status {
-            font-size:20px;
-            margin-bottom:20px;
-            height:28px;
-        }
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 100px);
-            gap: 6px;
-            background:#444;
-            padding:6px;
-            border-radius:8px;
-        }
-        .cell {
-            width:100px;
-            height:100px;
-            background:#333;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:48px;
-            cursor:pointer;
-            border-radius:4px;
-            user-select:none;
-        }
-        .cell:hover:not(.taken) {
-            background:#3a3a3a;
-        }
-        .cell.taken {
-            cursor:default;
-        }
-        .btn-group {
-            margin-top:24px;
-        }
-        button {
-            padding:10px 20px;
-            font-size:16px;
-            border:none;
-            border-radius:6px;
-            margin:0 6px;
-            cursor:pointer;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wx的小游戏中心</title>
+<style>
+*{box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;margin:0;padding:0;}
+body{background:#f0f7ff;padding:20px;max-width:800px;margin:0 auto;}
+.box{background:#fff;padding:24px;border-radius:12px;box-shadow:0 2px 12px #00000015;margin-bottom:20px;}
+h1{color:#224488;margin-bottom:8px;font-size:26px;}
+.info{font-size:17px;color:#444;margin-bottom:24px;line-height:1.6;}
+.btn-group{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+button{padding:12px 22px;font-size:16px;border:none;border-radius:8px;background:#2b60de;color:white;cursor:pointer;transition:0.2s;}
+button:hover{background:#1f48b3;}
+.hide{display:none;}
+
+/* 猜数字 */
+#guess-area{margin-top:16px;}
+#guess-area input{padding:10px;width:220px;font-size:16px;border:1px solid #ccc;border-radius:6px;margin-right:8px;}
+.msg{margin:12px 0;font-size:16px;min-height:24px;}
+
+/* 扫雷 */
+#mine-area{margin-top:16px;}
+.mine-board{display:grid;gap:2px;background:#aaa;padding:2px;border-radius:4px;width:fit-content;margin:10px 0;}
+.mine-cell{
+  width:32px;height:32px;background:#cccccc;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:16px;cursor:pointer;
+  border:2px outset #eee;user-select:none;
+}
+.mine-cell.opened{background:#e8e8e8;border:1px solid #bbb;}
+.mine-cell.flag{background:#ffdd99;}
+.color1{color:blue;}
+.color2{color:green;}
+.color3{color:red;}
+.color4{color:darkblue;}
+.color5{color:brown;}
+.color6{color:teal;}
+.color7{color:black;}
+.color8{color:#666;}
+</style>
 </head>
 <body>
-    <h1>井字棋 人机对战</h1>
-    <div class="status" id="status">你的回合 (X)</div>
-    <div class="board" id="board"></div>
+<div class="box">
+    <h1>你好，我是 Wx</h1>
+    <div class="info">
+        我就读于深圳市凤光小学 六年级二班。<br>
+        欢迎来到我的小游戏中心，请选择下面游戏开始游玩。
+    </div>
     <div class="btn-group">
-        <button id="resetBtn">重新开始</button>
+        <button onclick="showGuessGame()">🎮 猜数字游戏</button>
+        <button onclick="showMineGame()">💣 扫雷游戏</button>
     </div>
 
+    <!-- 猜数字游戏 -->
+    <div id="guess-area" class="hide">
+        <h3>猜数字游戏（1‑100）</h3>
+        <p>系统会随机生成1~100之间数字，你来猜！</p>
+        <input id="guessInput" type="number" placeholder="输入数字1‑100">
+        <button onclick="doGuess()">提交猜测</button>
+        <button onclick="resetGuess()">重新开始</button>
+        <div class="msg" id="guessMsg"></div>
+    </div>
+
+    <!-- 扫雷游戏 -->
+    <div id="mine-area" class="hide">
+        <h3>扫雷游戏（9×9，10颗雷）</h3>
+        <p>左键翻开格子，右键标记地雷旗子</p>
+        <button onclick="initMine()">重新开局</button>
+        <div id="mineBoard" class="mine-board"></div>
+        <div class="msg" id="mineMsg"></div>
+    </div>
+</div>
+
 <script>
-const boardEl = document.getElementById('board');
-const statusEl = document.getElementById('status');
-const resetBtn = document.getElementById('resetBtn');
-
-let board = [0,0,0,0,0,0,0,0,0]; // 0空 1玩家X 2电脑O
-let gameOver = false;
-
-// 渲染棋盘
-function render(){
-    boardEl.innerHTML = '';
-    for(let i=0;i<9;i++){
-        const div = document.createElement('div');
-        div.className = 'cell';
-        if(board[i]===1){
-            div.textContent = 'X';
-            div.classList.add('taken');
-        }else if(board[i]===2){
-            div.textContent = 'O';
-            div.classList.add('taken');
-        }
-        div.dataset.idx = i;
-        div.addEventListener('click',()=>clickCell(i));
-        boardEl.appendChild(div);
-    }
+// ============ 切换游戏显示 ============
+function showGuessGame(){
+    document.getElementById("guess-area").classList.remove("hide");
+    document.getElementById("mine-area").classList.add("hide");
+    resetGuess();
+}
+function showMineGame(){
+    document.getElementById("guess-area").classList.add("hide");
+    document.getElementById("mine-area").classList.remove("hide");
+    initMine();
 }
 
-// 获胜判断
-function checkWin(b){
-    const wins = [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8],[2,4,6]
-    ];
-    for(let w of wins){
-        const [a,b1,c] = w;
-        if(b[a]!==0 && b[a]===b[b1] && b[b1]===b[c]){
-            return b[a];
-        }
-    }
-    if(b.every(x=>x!==0)) return -1; //平局
-    return 0;
+// ============ 猜数字游戏 ============
+let answer = 0;
+let guessCount = 0;
+
+function resetGuess(){
+    answer = Math.floor(Math.random()*100)+1;
+    guessCount = 0;
+    document.getElementById("guessInput").value="";
+    document.getElementById("guessMsg").innerText="游戏已重置，请输入数字开始猜！";
 }
 
-// 极小极大 AI
-function minimax(b, isMax){
-    const res = checkWin(b);
-    if(res===2) return 10;
-    if(res===1) return -10;
-    if(res===-1) return 0;
-
-    if(isMax){
-        let best = -Infinity;
-        for(let i=0;i<9;i++){
-            if(b[i]===0){
-                b[i]=2;
-                best = Math.max(best, minimax(b,false));
-                b[i]=0;
-            }
-        }
-        return best;
+function doGuess(){
+    const inputDom = document.getElementById("guessInput");
+    const msgDom = document.getElementById("guessMsg");
+    let val = parseInt(inputDom.value);
+    if(isNaN(val) || val<1 || val>100){
+        msgDom.innerText="请输入1‑100之间有效的数字！";
+        return;
+    }
+    guessCount++;
+    if(val < answer){
+        msgDom.innerText=`第${guessCount}次猜测：太小啦，再大一点！`;
+    }else if(val>answer){
+        msgDom.innerText=`第${guessCount}次猜测：太大啦，再小一点！`;
     }else{
-        let best = Infinity;
-        for(let i=0;i<9;i++){
-            if(b[i]===0){
-                b[i]=1;
-                best = Math.min(best, minimax(b,true));
-                b[i]=0;
-            }
-        }
-        return best;
+        msgDom.innerText=`🎉恭喜！猜对了！答案就是${answer}，一共猜了${guessCount}次！点重新开始再来一局。`;
     }
 }
 
-// AI落子
-function aiMove(){
+// ============ 扫雷游戏 9*9 10雷 ============
+const ROW=9, COL=9, MINE_COUNT=10;
+let board=[];
+let mineMap=[];
+let opened=[];
+let gameOver=false;
+
+function initMine(){
+    gameOver=false;
+    document.getElementById("mineMsg").innerText="";
+    // 初始化数组
+    board = Array(ROW).fill(0).map(()=>Array(COL).fill(0));
+    mineMap = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
+    opened = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
+
+    // 随机放地雷
+    let placed=0;
+    while(placed<MINE_COUNT){
+        let r = Math.floor(Math.random()*ROW);
+        let c = Math.floor(Math.random()*COL);
+        if(!mineMap[r][c]){
+            mineMap[r][c]=true;
+            placed++;
+        }
+    }
+    // 计算周围地雷数
+    for(let r=0;r<ROW;r++){
+        for(let c=0;c<COL;c++){
+            if(mineMap[r][c]) continue;
+            let cnt=0;
+            for(let dr=-1;dr<=1;dr++){
+                for(let dc=-1;dc<=1;dc++){
+                    let nr=r+dr, nc=c+dc;
+                    if(nr>=0&&nr<ROW&&nc>=0&&nc<COL&&mineMap[nr][nc]) cnt++;
+                }
+            }
+            board[r][c]=cnt;
+        }
+    }
+    renderMineBoard();
+}
+
+function renderMineBoard(){
+    const wrap = document.getElementById("mineBoard");
+    wrap.innerHTML="";
+    wrap.style.gridTemplateColumns = `repeat(${COL}, 32px)`;
+    for(let r=0;r<ROW;r++){
+        for(let c=0;c<COL;c++){
+            const div = document.createElement("div");
+            div.className="mine-cell";
+            div.dataset.r=r;
+            div.dataset.c=c;
+            div.onclick=()=>cellClick(r,c);
+            div.oncontextmenu=(e)=>{
+                e.preventDefault();
+                cellRightClick(r,c,div);
+            };
+            if(opened[r][c]){
+                div.classList.add("opened");
+                if(mineMap[r][c]){
+                    div.innerText="💣";
+                }else if(board[r][c]>0){
+                    div.innerText=board[r][c];
+                    div.classList.add("color"+board[r][c]);
+                }
+            }
+            wrap.appendChild(div);
+        }
+    }
+}
+
+// 左键点开格子
+function cellClick(r,c){
     if(gameOver) return;
-    let bestScore = -Infinity;
-    let move = -1;
-    for(let i=0;i<9;i++){
-        if(board[i]===0){
-            board[i]=2;
-            const s = minimax(board,false);
-            board[i]=0;
-            if(s>bestScore){
-                bestScore = s;
-                move = i;
+    if(opened[r][c]) return;
+    if(mineMap[r][c]){
+        // 踩到地雷，游戏失败
+        gameOver=true;
+        opened = Array(ROW).fill(false).map((_,ri)=>mineMap[ri].map(x=>x));
+        document.getElementById("mineMsg").innerText="💥游戏失败！踩到地雷！";
+        renderMineBoard();
+        return;
+    }
+    openCell(r,c);
+    checkWin();
+    renderMineBoard();
+}
+
+// 递归翻开空白
+function openCell(r,c){
+    if(r<0||r>=ROW||c<0||c>=COL) return;
+    if(opened[r][c]) return;
+    opened[r][c]=true;
+    if(board[r][c]===0){
+        for(let dr=-1;dr<=1;dr++){
+            for(let dc=-1;dc<=1;dc++){
+                openCell(r+dr,c+dc);
             }
         }
     }
-    if(move!==-1){
-        board[move]=2;
-        render();
-        judgeGame();
+}
+
+// 右键插旗子
+function cellRightClick(r,c,dom){
+    if(gameOver) return;
+    if(opened[r][c]) return;
+    dom.classList.toggle("flag");
+}
+
+// 判断胜利：所有非雷格子全部打开
+function checkWin(){
+    let unopenedSafe=0;
+    for(let r=0;r<ROW;r++){
+        for(let c=0;c<COL;c++){
+            if(!mineMap[r][c] && !opened[r][c]) unopenedSafe++;
+        }
+    }
+    if(unopenedSafe===0){
+        gameOver=true;
+        document.getElementById("mineMsg").innerText="🎉恭喜，扫雷全部完成，游戏胜利！";
     }
 }
 
-// 玩家点击
-function clickCell(idx){
-    if(gameOver || board[idx]!==0) return;
-    board[idx]=1;
-    render();
-    judgeGame();
-    if(!gameOver){
-        statusEl.innerText = "电脑思考中...";
-        setTimeout(()=>{
-            aiMove();
-            if(!gameOver) statusEl.innerText = "你的回合 (X)";
-        },400);
-    }
+// 页面加载完初始化
+window.onload=()=>{
+    resetGuess();
 }
-
-// 判断游戏结果
-function judgeGame(){
-    const r = checkWin(board);
-    if(r===1){
-        statusEl.innerText = "🎉 你赢了！";
-        gameOver=true;
-    }else if(r===2){
-        statusEl.innerText = "😞 电脑获胜";
-        gameOver=true;
-    }else if(r===-1){
-        statusEl.innerText = "🤝 平局";
-        gameOver=true;
-    }
-}
-
-// 重置
-resetBtn.addEventListener('click',()=>{
-    board = [0,0,0,0,0,0,0,0,0];
-    gameOver = false;
-    statusEl.innerText = "你的回合 (X)";
-    render();
-});
-
-render();
 </script>
 </body>
 </html>
-
