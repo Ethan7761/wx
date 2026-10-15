@@ -6,7 +6,6 @@
 <title>Wx的小游戏中心</title>
 <style>
 *{box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;margin:0;padding:0;}
-
 /* 星空背景 */
 body{
   margin:0;
@@ -20,7 +19,6 @@ body{
   width:100%;height:100%;
   z-index:-1;
 }
-
 .container{
   padding:24px;
   max-width:850px;
@@ -41,24 +39,27 @@ h1{color:#1a2b60;margin-bottom:10px;font-size:28px;}
   margin-bottom:26px;
 }
 .btn-group{
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+  gap:16px;
   margin-bottom:22px;
 }
 button{
-  padding:12px 20px;
-  font-size:16px;
+  padding:24px 16px;
+  font-size:18px;
   border:none;
-  border-radius:9px;
-  background:#2b4cad;
+  border-radius:12px;
+  background: linear-gradient(135deg,#2b4cad,#4272e8);
   color:white;
   cursor:pointer;
   transition:0.2s;
+  box-shadow:0 3px 10px rgba(43,76,173,0.3);
 }
-button:hover{background:#1c337a;}
+button:hover{
+  background: linear-gradient(135deg,#1c337a,#3058bd);
+  transform: translateY(-3px);
+}
 .hide{display:none;}
-
 /* 猜数字 */
 #guess-area{margin-top:16px;}
 #guess-area input{
@@ -66,7 +67,6 @@ button:hover{background:#1c337a;}
   border:1px solid #aaa;border-radius:6px;margin-right:8px;
 }
 .msg{margin:12px 0;font-size:16px;min-height:26px;}
-
 /* 扫雷 */
 #mine-area{margin-top:16px;}
 .mine-board{
@@ -89,7 +89,6 @@ button:hover{background:#1c337a;}
 .color6{color:teal;}
 .color7{color:black;}
 .color8{color:#555;}
-
 /* 记忆卡牌 */
 #memory-area{margin-top:16px;}
 .memory-board{
@@ -118,6 +117,50 @@ button:hover{background:#1c337a;}
   color:white;
   cursor:default;
 }
+/* 英语消消乐 */
+#english-area{margin-top:16px;}
+.english-mode-btn{
+  display:flex;gap:10px;margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.english-mode-btn button{
+  padding:12px 18px;font-size:16px;
+}
+.english-board{
+  display:grid;
+  gap:10px;
+  max-width:520px;
+  margin:14px 0;
+}
+/* 简单模式：两列竖排 中文｜英文 */
+.english-board.simple{
+  grid-template-columns: 1fr 1fr;
+}
+/* 困难模式：自动多列打乱 */
+.english-board.hard{
+  grid-template-columns: repeat(4,1fr);
+}
+.english-card{
+  padding:18px 8px;
+  background:linear-gradient(135deg,#5641d8,#826cf0);
+  color:white;
+  text-align:center;
+  border-radius:10px;
+  font-size:17px;
+  cursor:pointer;
+  user-select:none;
+  transition:0.25s;
+}
+.english-card.selected{
+  background:linear-gradient(135deg,#ff9800,#ffc107);
+  color:#222;
+}
+.english-card.hide-card{
+  display:none;
+}
+.timer-text{
+  font-weight:bold;font-size:18px;color:#d92b2b;margin:8px 0;
+}
 </style>
 </head>
 <body>
@@ -128,15 +171,14 @@ button:hover{background:#1c337a;}
     <div class="info">
         我现在就读于<strong>深圳市凤光小学 六年级二班</strong>。<br>
         我的爱好有：<strong>跳绳、编程、魔方</strong>。<br>
-        在跳绳项目中，我曾经获得过全国冠军、亚军、季军的好成绩。<br>
         欢迎来到我的小游戏中心，选择下面游戏开始游玩！
     </div>
     <div class="btn-group">
         <button onclick="showGuessGame()">🎮 猜数字游戏</button>
         <button onclick="showMineGame()">💣 扫雷游戏</button>
         <button onclick="showMemoryGame()">🃏 记忆卡牌游戏</button>
+        <button onclick="showEnglishGame()">📖 英语消消乐</button>
     </div>
-
     <!-- 猜数字游戏 -->
     <div id="guess-area" class="hide">
         <h3>猜数字游戏（1‑100）</h3>
@@ -146,7 +188,6 @@ button:hover{background:#1c337a;}
         <button onclick="resetGuess()">重新开始</button>
         <div class="msg" id="guessMsg"></div>
     </div>
-
     <!-- 扫雷游戏 -->
     <div id="mine-area" class="hide">
         <h3>扫雷游戏（9×9，10颗雷）</h3>
@@ -155,7 +196,6 @@ button:hover{background:#1c337a;}
         <div id="mineBoard" class="mine-board"></div>
         <div class="msg" id="mineMsg"></div>
     </div>
-
     <!-- 记忆卡牌游戏 -->
     <div id="memory-area" class="hide">
         <h3>🃏记忆卡牌配对</h3>
@@ -164,9 +204,19 @@ button:hover{background:#1c337a;}
         <div id="memoryBoard" class="memory-board"></div>
         <div class="msg" id="memoryMsg"></div>
     </div>
+    <!-- 英语消消乐 -->
+    <div id="english-area" class="hide">
+        <h3>📖英语消消乐</h3>
+        <div class="english-mode-btn">
+            <button onclick="initEnglish('simple')">😊简单模式（8组）</button>
+            <button onclick="initEnglish('hard')">🔥困难模式（15组，限时30秒）</button>
+        </div>
+        <div class="timer-text" id="englishTimer"></div>
+        <div id="englishBoard" class="english-board"></div>
+        <div class="msg" id="englishMsg"></div>
+    </div>
 </div>
 </div>
-
 <script>
 // ======================星空背景canvas======================
 const canvas = document.getElementById('starBg');
@@ -203,27 +253,34 @@ function drawStar(){
 resizeStar();
 drawStar();
 window.addEventListener("resize",resizeStar);
-
 // ============切换游戏============
 function showGuessGame(){
     document.getElementById("guess-area").classList.remove("hide");
     document.getElementById("mine-area").classList.add("hide");
     document.getElementById("memory-area").classList.add("hide");
+    document.getElementById("english-area").classList.add("hide");
     resetGuess();
 }
 function showMineGame(){
     document.getElementById("guess-area").classList.add("hide");
     document.getElementById("mine-area").classList.remove("hide");
     document.getElementById("memory-area").classList.add("hide");
+    document.getElementById("english-area").classList.add("hide");
     initMine();
 }
 function showMemoryGame(){
     document.getElementById("guess-area").classList.add("hide");
     document.getElementById("mine-area").classList.add("hide");
     document.getElementById("memory-area").classList.remove("hide");
+    document.getElementById("english-area").classList.add("hide");
     initMemory();
 }
-
+function showEnglishGame(){
+    document.getElementById("guess-area").classList.add("hide");
+    document.getElementById("mine-area").classList.add("hide");
+    document.getElementById("memory-area").classList.add("hide");
+    document.getElementById("english-area").classList.remove("hide");
+}
 // ============猜数字============
 let answer = 0;
 let guessCount = 0;
@@ -250,7 +307,6 @@ function doGuess(){
         msgDom.innerText=`🎉恭喜！猜对了！答案就是${answer}，一共猜了${guessCount}次！点重新开始再来一局。`;
     }
 }
-
 // ============扫雷（修复旗子bug版本）============
 const ROW=9, COL=9, MINE_COUNT=10;
 let board=[];
@@ -265,7 +321,6 @@ function initMine(){
     mineMap = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
     opened = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
     flagged = Array(ROW).fill(false).map(()=>Array(COL).fill(false));
-
     let placed=0;
     while(placed<MINE_COUNT){
         let r = Math.floor(Math.random()*ROW);
@@ -364,13 +419,11 @@ function checkWin(){
         document.getElementById("mineMsg").innerText="🎉恭喜，扫雷全部完成，游戏胜利！";
     }
 }
-
 // ============记忆卡牌游戏============
 let memoryCards = [];
 let openList = [];
 let memoryLock = false;
 const symbols = ["🍎","🍐","🍊","🍋","🍇","🍓","🥝","🍒"];
-
 function initMemory(){
     openList = [];
     memoryLock = false;
@@ -408,10 +461,8 @@ function clickCard(index){
     if(memoryLock) return;
     let exist = openList.find(i=>i.idx===index);
     if(exist) return;
-
     openList.push({idx:index,symbol:memoryCards[index],done:false});
     renderMemory();
-
     if(openList.length %2 ===0){
         memoryLock = true;
         let last1 = openList[openList.length-2];
@@ -438,6 +489,147 @@ function checkMemoryWin(){
         document.getElementById("memoryMsg").innerText="🎉恭喜，全部卡牌配对完成，游戏胜利！";
     }
 }
+// ============英语消消乐============
+//单词库
+const simpleWordList = [
+  {en:"apple",cn:"苹果"},
+  {en:"banana",cn:"香蕉"},
+  {en:"cat",cn:"猫"},
+  {en:"dog",cn:"狗"},
+  {en:"book",cn:"书"},
+  {en:"pen",cn:"钢笔"},
+  {en:"sun",cn:"太阳"},
+  {en:"moon",cn:"月亮"},
+];
+const hardWordList = [
+  {en:"apple",cn:"苹果"},
+  {en:"banana",cn:"香蕉"},
+  {en:"cat",cn:"猫"},
+  {en:"dog",cn:"狗"},
+  {en:"book",cn:"书"},
+  {en:"pen",cn:"钢笔"},
+  {en:"sun",cn:"太阳"},
+  {en:"moon",cn:"月亮"},
+  {en:"bird",cn:"小鸟"},
+  {en:"fish",cn:"鱼"},
+  {en:"milk",cn:"牛奶"},
+  {en:"water",cn:"水"},
+  {en:"tree",cn:"树"},
+  {en:"flower",cn:"花"},
+  {en:"school",cn:"学校"},
+];
+
+let englishItems = [];
+let selectedItem = null;
+let englishMode = "simple";
+let timer = null;
+let remainTime = 30;
+function initEnglish(mode){
+    englishMode = mode;
+    selectedItem = null;
+    document.getElementById("englishMsg").innerText="";
+    document.getElementById("englishTimer").innerText="";
+    if(timer) clearInterval(timer);
+
+    let wordList;
+    if(mode === "simple"){
+        wordList = simpleWordList;
+    }else{
+        wordList = hardWordList;
+        remainTime = 30;
+    }
+
+    let temp = [];
+    if(mode === "simple"){
+        //简单模式：左边全部中文竖排，右边全部英文竖排，不打乱分组
+        wordList.forEach(w=>{
+            temp.push({text:w.cn,matchId:w.en,hide:false});
+        });
+        wordList.forEach(w=>{
+            temp.push({text:w.en,matchId:w.en,hide:false});
+        });
+    }else{
+        //困难模式：中英文全部打乱
+        wordList.forEach(w=>{
+            temp.push({text:w.cn,matchId:w.en,hide:false});
+            temp.push({text:w.en,matchId:w.en,hide:false});
+        });
+        //洗牌
+        for(let i=temp.length-1;i>0;i--){
+            let j = Math.floor(Math.random()*(i+1));
+            [temp[i],temp[j]] = [temp[j],temp[i]];
+        }
+    }
+    englishItems = temp;
+    renderEnglish();
+
+    //困难模式开启倒计时
+    if(mode === "hard"){
+        document.getElementById("englishTimer").innerText="⏱剩余时间："+remainTime+"秒";
+        timer = setInterval(()=>{
+            remainTime--;
+            document.getElementById("englishTimer").innerText="⏱剩余时间："+remainTime+"秒";
+            if(remainTime <=0){
+                clearInterval(timer);
+                document.getElementById("englishMsg").innerText="⏰时间到！游戏失败！";
+            }
+        },1000);
+    }
+}
+function renderEnglish(){
+    const wrap = document.getElementById("englishBoard");
+    wrap.innerHTML="";
+    wrap.className="english-board";
+    wrap.classList.add(englishMode);
+
+    englishItems.forEach((item,idx)=>{
+        const div = document.createElement("div");
+        div.className="english-card";
+        if(item.hide){
+            div.classList.add("hide-card");
+        }
+        div.innerText = item.text;
+        div.dataset.index = idx;
+        if(selectedItem && selectedItem.idx === idx){
+            div.classList.add("selected");
+        }
+        div.onclick = ()=>clickEnglishCard(idx);
+        wrap.appendChild(div);
+    })
+}
+function clickEnglishCard(idx){
+    if(remainTime<=0 && englishMode==="hard") return;
+    const item = englishItems[idx];
+    if(item.hide) return;
+
+    if(selectedItem === null){
+        selectedItem = {idx, data:item};
+        renderEnglish();
+    }else{
+        if(selectedItem.idx === idx) return;
+        //配对成功：两个卡片隐藏（消失）
+        if(selectedItem.data.matchId === item.matchId){
+            englishItems[selectedItem.idx].hide = true;
+            englishItems[idx].hide = true;
+            selectedItem = null;
+            document.getElementById("englishMsg").innerText("✅配对成功！");
+            renderEnglish();
+            checkEnglishWin();
+        }else{
+            //配对错误，直接清空选中状态
+            selectedItem = null;
+            document.getElementById("englishMsg").innerText("❌不匹配，请重新选择！");
+            renderEnglish();
+        }
+    }
+}
+function checkEnglishWin(){
+    let allHide = englishItems.every(i=>i.hide === true);
+    if(allHide){
+        if(timer) clearInterval(timer);
+        document.getElementById("englishMsg").innerText="🎉太棒啦！所有单词配对完成！";
+    }
+}
 
 window.onload=()=>{
     resetGuess();
@@ -445,6 +637,7 @@ window.onload=()=>{
 </script>
 </body>
 </html>
+
 
 </script>
 </body>
